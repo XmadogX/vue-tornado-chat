@@ -33,14 +33,11 @@
         </div>
         <script>
             "use strict"
-
-            const str = ('[{% for message in messages %}{"user":"{{message ["user"]}}","text":"{{message ["text"]}}"},{% end %}'.slice(0, -1)+']')
-
             var app = new Vue({
                 el: '#app',
                 delimiters: ["${", "}"],
                 data: {
-                    messages: JSON.parse(str),
+                    messages: null,
                     message:{
                         user:"t1",
                         text:"t2"
@@ -48,6 +45,8 @@
                     ws: null
                 },
                 mounted: function () {
+                    let str = '[{% for message in messages %}{"user":"{{message ["user"]}}","text":"{{message ["text"]}}"},{% end %}'.slice(0, -1)+']';
+                    this.messages = JSON.parse(str);
                     let _this = this
                     const Socket = {
                         init: function() {
