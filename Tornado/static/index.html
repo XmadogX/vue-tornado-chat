@@ -1,0 +1,87 @@
+
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Tornado Chat</title>
+        <link rel="stylesheet" href="/static/lib/bootstrap/css/bootstrap.min.css">
+        <link rel="stylesheet" href="/static/lib/bootstrap/css/bootstrap-responsive.min.css">
+        <link rel="stylesheet" href="/static/css/style.css">
+
+        <script src="/static/js/vue.js"></script>
+    </head>
+    <body>
+        <div id="app" class="container">
+            <h1>Tornado Chat</h1>
+            <div class="chat-messages well">
+                <div class="message" v-for="message in messages">
+                    <address>${message.user}</address><span>${message.text}</span>
+                </div>
+            </div>
+                <div class="input-prepend">
+                    <div class="add-on">
+                        <i class="icon-user"></i>
+                    </div>
+                    <input v-model ="message.user" v-on:keyup.enter="Send" type="text" name="user" placeholder="Your name" autofocus>
+                </div>
+                <div class="input-prepend input-append">
+                    <div class="add-on">
+                        <i class="icon-envelope"></i>
+                    </div>
+                    <input v-model ="message.text" v-on:keyup.enter="Send" class="input-large" type="text" name="text" placeholder="Enter your message here..." autocomplete="off">
+                    <button v-on:click="Send" class="btn btn-primary" type="submit">Send</button>
+                </div>
+        </div>
+        <script>
+            "use strict"
+
+            const str = ('[{% for message in messages %}{"user":"{{message ["user"]}}","text":"{{message ["text"]}}"},{% end %}'.slice(0, -1)+']')
+
+            var app = new Vue({
+                el: '#app',
+                delimiters: ["${", "}"],
+                data: {
+                    messages: JSON.parse(str),
+                    message:{
+                        user:"t1",
+                        text:"t2"
+                    },
+                    ws: null
+                },
+                mounted: function () {
+                    let _this = this
+                    const Socket = {
+                        init: function() {
+                            let ws = new WebSocket('ws://' + document.location.host + '/websocket');
+                            ws.onopen = function () {
+                                console.log('Socket opened');
+                            };
+
+                            ws.onclose = function () {
+                                console.log({"user":this.message.user,"text":this.message.text});
+                            };
+
+                            ws.onmessage = function (e) {
+                                console.log(JSON.parse(e.data));
+                                _this.messages.push(JSON.parse(e.data));
+                                
+                            };
+                            this.ws = ws;
+                        }
+                    }
+                    Socket.init();
+                    this.ws = Socket.ws;
+                },
+                methods: {
+                    Send: function () {
+                        if (this.message.user != "" && this.message.text != ""){
+                            console.log(`user:${this.message.user}text:${this.message.text}`);
+                            this.ws.send(JSON.stringify({"user":this.message.user,"text":this.message.text}))
+                            this.messages.push({"user":this.message.user,"text":this.message.text});
+                            this.message.text = "";
+                        }
+                    }
+                }
+            })
+        </script>
+    </body>
+</html>
